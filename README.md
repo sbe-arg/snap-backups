@@ -4,9 +4,18 @@ A very basic tool for taking, moving and restoring snap apps backups.
 
 ```bash
 # backup
-./snap-backup.sh --apps app1,app2,app2 --dest /some/location/folder
+sudo ./snap-backup.sh --apps app1,app2,app2 --dest /some/location/folder
 # restore
-./snap-restore.sh --app appname --source /some/location/of.zip
+sudo ./snap-restore.sh --app appname --source /some/location/of/file
+```
+
+Example:
+```bash
+sudo crontab -e
+0 2 * * * /path/to/snap-backup.sh --apps app1,app2 --dest /backup/snaps
+
+# to restore run
+sudo /path/to/snap-restore.sh --app app1 --source /backup/snaps/902-nextcloud-2023-12-12-033055
 ```
 
 NOTE: Some snaps run as services, they will be stopped when the backup is taken. They will be started again when the restore is done. This is done to ensure the backup is consistent. But it may cause some downtime.

@@ -12,15 +12,17 @@ restore_snaps() {
     fi
 
     # Install and Stop
-    snap install "$app" || { echo "Error: Failed to install snap '$app'." >&2; exit 1; }
-    snap services "$app" | grep -Ew 'active' && snap stop "$app" || { echo "Error: Failed to stop snap $app." >&2; exit 1; }
+    /usr/bin/snap install "$app" || { echo "Error: Failed to install snap '$app'." >&2; exit 1; }
+    if /usr/bin/snap services "$app" | grep -Ew 'active'; then
+        /usr/bin/snap stop "$app" || { echo "error: failed to stop snap $app." >&2; exit 1; }
+    fi
 
     # Import snapshot
-    snap import-snapshot "$source" || { echo "Error: Failed to import snapshot from '$source'." >&2; exit 1; }
+    /usr/bin/snap import-snapshot "$source" || { echo "error: failed to import snapshot from '$source'." >&2; exit 1; }
 
     # Check if the snap is available
-    if ! snap saved "$app" >/dev/null 2>&1; then
-        echo "Error: Snap '$app' snapshot is not available."
+    if ! /usr/bin/snap saved "$app" >/dev/null 2>&1; then
+        echo "error: snap '$app' snapshot is not available."
         exit 1
     fi
 
@@ -28,10 +30,10 @@ restore_snaps() {
     snapshot_id=$(snap saved "$app" | grep -oE '^[0-9]+' | sort -nr | head -n 1)
 
     # Restore the snapshot
-    snap restore --id="$snapshot_id" --snap="$app" || { echo "Error: Failed to restore snapshot '$snapshot_id'." >&2; exit 1; }
+    /usr/bin/snap restore "$snapshot_id" || { echo "error: failed to restore snapshot '$snapshot_id'." >&2; exit 1; }
 
     # Forget the snapshot
-    snap forget --id="$snapshot_id" --snap="$app" || { echo "Error: Failed to forget snapshot '$snapshot_id'." >&2; exit 1; }
+    /usr/bin/snap forget "$snapshot_id" || { echo "error: failed to forget snapshot '$snapshot_id'." >&2; exit 1; }
 
     echo "Snap '$app','$snapshot_id' restored successfully."
 }

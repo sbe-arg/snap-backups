@@ -9,14 +9,18 @@ backup_snaps() {
     # Save specified snaps and copy snapshot files to the destination directory
     for app in "${apps[@]}"; do
         echo "Action: Stop, save and export snap $app"
-        snap services "$app" | grep -Ew 'active' && snap stop "$app" || { echo "Error: Failed to stop snap $app." >&2; exit 1; }
-        snap save "$app" || { echo "Error: Failed to save snap $app." >&2; exit 1; }
-        snap services "$app" | grep -Ew 'inactive' && snap start "$app"  || { echo "Error: Failed to start snap $app." >&2; exit 1; }
-        snapshot_id=$(snap saved "$app" | grep -oE '^[0-9]+' | sort -nr | head -n 1)
-        date=$(date +"%Y-%m-%d")
-        snap export-snapshot "$snapshot_id" "$dest/$snapshot_id-$app-$date" || { echo "Error: Failed to export snapshot $snapshot_id for $app in $dest/$snapshot_id-$app-$date" >&2; exit 1; }
+        if /usr/bin/snap services "$app" | grep -Ew 'active'; then
+            /usr/bin/snap stop "$app" || { echo "error: failed to stop snap $app." >&2; exit 1; }
+        fi
+        /usr/bin/snap save "$app" || { echo "error: failed to save snap $app." >&2; exit 1; }
+        if /usr/bin/snap services "$app" | grep -Ew 'inactive'; then
+            /usr/bin/snap start "$app" || { echo "error: failed to start snap $app." >&2; exit 1; }
+        fi
+        snapshot_id=$(/usr/bin/snap saved "$app" | awk 'NR==2 {print $1}')
+        date=$(date +"%Y-%m-%d-%H%M%S")
+        /usr/bin/snap export-snapshot "$snapshot_id" "$dest/$snapshot_id-$app-$date" || { echo "error: failed to export snapshot $snapshot_id for $app in $dest/$snapshot_id-$app-$date" >&2; exit 1; }
         echo "Action: Forget $app:$snapshot_id"
-        snap forget --id="$snapshot_id" --snap="$app" || { echo "Error: Failed to forget snapshot $snapshot_id for $app." >&2; exit 1; }
+        /usr/bin/snap forget "$snapshot_id" || { echo "error: failed to forget snapshot $snapshot_id for $app." >&2; exit 1; }
     done
 }
 
@@ -37,11 +41,11 @@ main() {
 
     # Validate arguments
     if [ ${#apps[@]} -eq 0 ]; then
-        echo "Error: No apps specified."
+        echo "error: no apps specified."
         exit 1
     fi
     if [ ! -d "$dest" ]; then
-        echo "Error: Invalid destination"
+        echo "error: invalid destination directory."
         exit 1
     fi
 
