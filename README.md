@@ -12,7 +12,8 @@ sudo ./snap-restore.sh --app appname --source /some/location/of/file
 Example:
 ```bash
 sudo crontab -e
-0 2 * * * /path/to/snap-backup.sh --apps app1,app2 --dest /backup/snaps
+0 2 * * * /path/to/snap-backup.sh --apps app1,app2 --dest /backup/snaps # save X number of snapshots into a destination folder
+0 3 * * * /path/to/recycle-backups.sh # cleanup backup directory only with the latest X number of backups
 
 # to restore run
 sudo /path/to/snap-restore.sh --app app1 --source /backup/snaps/902-nextcloud-2023-12-12-033055
